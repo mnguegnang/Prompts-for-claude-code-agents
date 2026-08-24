@@ -1,6 +1,6 @@
 # Deep Learning / Machine Learning Review Framework
 
-Domain-specific review checklist for DL/ML codebases. Loaded by the Code Review agent when the project involves training loops, data pipelines, or classical ML.
+Domain-specific review checklist for DL/ML codebases. Loaded by the Code Review agent when the project involves training loops, data pipelines, or classical ML. Load alongside `review-methodology.prompt.md` and `evaluation-methodology.prompt.md`.
 
 ## 1. Training Loop & Architecture
 
@@ -15,6 +15,24 @@ Domain-specific review checklist for DL/ML codebases. Loaded by the Code Review 
 - Verify train/val/test split separation. Look for data leakage (e.g., applying dataset-wide scaling before splitting, or train/val preprocessing mismatch).
 - Check class imbalance handling and metric selection validity.
 - Verify that evaluation metrics match the stated objective.
+
+### Determinism (seeds alone are not enough)
+Fixing seeds does not make a CUDA training run reproducible. Also require, where reproducibility
+is claimed: `torch.use_deterministic_algorithms(True)`, `CUBLAS_WORKSPACE_CONFIG=:4096:8`,
+`cudnn.benchmark=False`, a seeded DataLoader `worker_init_fn` and `generator`, and pinned library
+plus CUDA versions. A reproducibility claim without these is **High** — label it "seeded, not
+deterministic".
+
+### Benchmark contamination
+Train/val/test separation guards leakage *you* introduced. Where a pretrained or foundation model
+is involved, also check that the evaluation set did not leak through **pretraining** — public
+benchmarks, scraped corpora, or dataset cards overlapping the eval set. An uncontaminated claim
+with no contamination check is **High**.
+
+### Statistical reporting
+Apply `review-methodology.prompt.md` §1: state n, report stratified bootstrap CIs and IQM rather
+than bare point estimates, report effect size. Averaging runs does not establish significance.
+Results must be reported per slice as well as in aggregate.
 
 ## 3. Data Loading & Bottlenecks
 

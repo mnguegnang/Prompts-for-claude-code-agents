@@ -16,20 +16,33 @@ Detailed research protocol for the Principal Investigator's Phase 2 — Rigorous
 - **Deep Reading:** For critical seed papers, use `mcp__academic-research__fetch_paper_pdf` to extract full text. Use `max_pages` to limit context (e.g., 5–10 pages for methodology sections). Cite specific sections and equations from the extracted text.
 - **BibTeX Export:** After finalizing the paper selection, use `mcp__academic-research__export_bibtex` to export all selected papers to a `.bib` file in the workspace. Save the path to session memory.
 
-## Paper Quality Scoring Rubric
+## Paper Admissibility Gates (binary — not a scored rubric)
 
-After gathering candidate papers, produce a visible evaluation table the user can review before you build the lecture on top of it. Rate each paper on 4 dimensions (1–5 scale):
+Do **not** score papers 1–5 across dimensions and sum them. Unanchored ordinal scales are not
+commensurable, summing them invents precision that does not exist, and a threshold on the sum
+(e.g. "10/20") is arbitrary. The same antipattern is why LLM evaluation practice moved to binary
+judgments: a pass/fail verdict plus a written justification forces an explicit decision about what
+actually matters, where a 3-vs-4 distinction never does.
 
-| Paper | Recency | Citation Impact | Reproducibility | Relevance | Total |
-|-------|---------|-----------------|-----------------|-----------|-------|
-| ...   | ...     | ...             | ...             | ...       | ...   |
+Apply **independent binary gates** and record a one-line justification per paper:
 
-- **Recency:** 5 = published within 1 year, 1 = >5 years old.
-- **Citation Impact:** Based on `citation_count` relative to age and `venue` prestige.
-- **Reproducibility:** 5 = public code + reported hyperparameters + dataset available. 3 = partial. 1 = none. Use `search_papers_with_code` results to verify code availability.
-- **Relevance:** How directly the paper addresses the user's topic and constraints from Phase 1.
+| Gate | Question | Pass condition |
+|------|----------|----------------|
+| **Provenance** | Is the source credible? | Peer-reviewed venue, OR preprint with substantive citation traction, OR authored by an established group in the area |
+| **Relevance** | Does it address the user's topic *and* constraints from Phase 1? | Directly, not by analogy |
+| **Reproducibility** | Could someone rebuild this? | Public code, reported hyperparameters, or an accessible dataset — state which of the three are present |
+| **Evidence** | Are the claims supported? | Reports experimental conditions, baselines, and dispersion — not just headline numbers |
+| **Currency** | Has it been superseded? | No later work invalidates the method for this use case |
 
-Present this table to the user. Papers scoring below 10/20 should be flagged with justification for inclusion or exclusion. The user may override your scoring.
+Present the table with a **PASS/FAIL per gate** and the justification. A paper failing any gate may
+still be included — but the inclusion must be argued explicitly, in writing.
+
+**Do not score recency.** Penalising age structurally biases the survey toward novelty and
+discards foundational mathematics, which is usually the part the user most needs grounded.
+Recency is handled by the Currency gate (has this been superseded?), which is the question that
+actually matters. Note publication year as metadata, not as a score.
+
+The user may override any verdict.
 
 ## Multi-Faceted Evaluation
 
@@ -58,3 +71,14 @@ Output a short **"Open Questions"** section (3–5 bullets) in the transition su
 - Output a concise summary (2–7 sentences) naming top papers, citing hard metrics (citation count, venue), and summarizing the chosen architectural direction with user-context application.
 - Include the **Open Questions** section from Research Gap Identification.
 - Note any unresolved contradictions that the user should be aware of.
+
+## Reporting Evidence from Papers
+
+When citing a result, carry its conditions with it. A benchmark number quoted without its
+experimental setup is not transferable evidence.
+- State the dataset, model scale, and hardware the result was obtained on.
+- State **n** (seeds/runs) and dispersion if the paper reports them; state "not reported" if it
+  does not — that absence is itself a finding about the paper's strength.
+- Never present a single reported number as an expected outcome for the user's setting. Frame it
+  as "reported under these conditions", and flag the gap to the user's constraints.
+- Where papers disagree, keep both numbers and their conditions rather than averaging them.

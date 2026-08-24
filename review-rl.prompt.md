@@ -1,6 +1,6 @@
 # Reinforcement Learning Review Framework
 
-Domain-specific review checklist for RL codebases. Loaded by the Code Review agent when the project involves RL agents, environments, reward design, or policy optimization.
+Domain-specific review checklist for RL codebases. Loaded by the Code Review agent when the project involves RL agents, environments, reward design, or policy optimization. Load alongside `review-methodology.prompt.md` and `evaluation-methodology.prompt.md`.
 
 ## 1. Environment & MDP Design
 
@@ -21,3 +21,21 @@ Domain-specific review checklist for RL codebases. Loaded by the Code Review age
 - Ensure random seeds are fixed across the agent, the environment, and action spaces.
 - Verify that evaluation runs are strictly deterministic (e.g., `action = argmax(policy)` instead of sampling), unless stochasticity is explicitly required.
 - Check for proper logging of episode returns, lengths, and success metrics across training.
+
+### Statistical reporting (RL is where point estimates mislead most)
+Deep RL results vary enormously across seeds, and the field's shift to expensive benchmarks has
+pushed run counts down — exactly the regime where mean and median point estimates are unreliable.
+Require:
+- **n stated explicitly**; n < 5 is reported as preliminary, n = 1 as an anecdote.
+- **Stratified bootstrap confidence intervals** and **interquartile mean (IQM)** in place of bare
+  mean/median aggregate scores. `rliable` implements these for a handful of seeds.
+- **Performance profiles** across tasks and runs, not a single aggregate number.
+- **Effect size** and shared conditions (same env version, same wrappers, same eval protocol).
+
+Flag as **High**: any algorithm comparison reported as point estimates without dispersion, and any
+"outperforms baseline" claim from a small number of unreported seeds.
+
+### Reward hacking check
+Reward hacking is an evaluation failure, not just a training curiosity. Verify the reward function
+cannot be maximised by behaviour that does not achieve the task, and that a separate task-success
+metric — independent of reward — is logged and reported.

@@ -1,5 +1,13 @@
 # LaTeX Conventions
 
+> **Read before drafting any prose artifact:** `~/.claude/agents/Scientific-writing-guide-anti-AI-text.md` — the
+> human-centric scientific writing manual. It governs the *prose* inside every `.tex` file this
+> pipeline produces (lectures, literature reviews, papers, defense slides); this file governs the
+> *mechanics* (packages, citations, compilation). Apply the manual while drafting, not as a
+> cleanup pass afterwards. Its hard bans: no em-dashes, digits for all numbers, sentence case
+> headers, and none of "delve", "realm", "harness", or "tapestry". A `PreToolUse` writing guard
+> surfaces the rules on your first `.tex` write of a session.
+
 Shared LaTeX compilation and citation standards for all agents producing `.tex` artifacts.
 
 ## Compilation
