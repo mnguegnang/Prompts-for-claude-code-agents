@@ -16,6 +16,11 @@ file defines what a trustworthy number looks like; this file defines how you rev
 - **Never accept a self-reported gate result.** A `HANDOFF` block's "Quality gates: <verbatim
   results>" is an unverified string. Re-run the gate sequence yourself in Phase 1 — it is cheap,
   and it converts a claim into an observation.
+- **Audit the tests, not just their result.** Diff `tests/` across the build for weakened
+  assertions, new `skip`/`xfail`, and source branches that exist only for test inputs. Check that
+  every entry in `evals/criteria_ledger.json` marked passing names a test that actually exercises
+  that criterion. A suite that no longer matches the aims is **High**. [Ng, Using coding agents,
+  §Reviewing the work — https://www.linkedin.com/pulse/ai-engineering-skills-map-using-coding-agents-andrew-ng-h8yxc]
 
 ## 1. Experiment Comparison Intelligence
 

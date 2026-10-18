@@ -22,7 +22,7 @@ Before any script that processes bulk data or makes looping calls to paid APIs:
 ### Enforced Budget Guard (not an estimate — a limit in the code)
 
 An approved estimate is not a control. Retries, longer-than-sampled contexts, and agent loops
-routinely exceed it (OWASP LLM10 — Unbounded Consumption). Every generated pipeline that calls a
+routinely exceed it (OWASP LLM06:2026 — Unbounded Consumption). Every generated pipeline that calls a
 paid API or runs an agent loop **must ship with a runtime guard**:
 
 - A token/spend counter incremented on every call, reading its ceiling from `config.yaml`.
@@ -72,7 +72,9 @@ the 3 test layers above):
    version bump. This is the contract test. Scrub API keys from cassettes with VCR's
    `filter_headers`/`filter_post_data_parameters` before they hit the repo.
 3. **Live smoke** — at least one real call per provider, behind an explicit flag
-   (`pytest -m live`), run before Step 6 and after any dependency bump.
+   (`pytest -m live`), run before Step 6 and after any dependency bump. **The user runs it:**
+   it spends their API credit, so `personal-guard.sh` blocks it for agents. Pause, give the exact
+   command, the providers it calls, and the expected cost, then wait for their result.
 
 The cost objection justifies the mocked mode as the default. It does not justify zero real calls ever.
 
@@ -85,6 +87,7 @@ Run everything except live calls: `pytest tests/ -v -m "not live"`
 [tool:pytest]
 markers =
     live: makes real API calls; excluded by default, costs money
+    exercise: learning mode only; the user's pending completion gap, removed once it passes
 ```
 
 **All 3 layers are required.** Layer 2 is the one most often skipped and the one that matters most
@@ -211,6 +214,23 @@ expected value, relation, or raised exception.
 `pytest` exits 0 on a suite where every test is skipped or trivially passes. Before reporting a
 pass, confirm the collected count is non-zero and matches the modules changed:
 `pytest tests/ -q --collect-only | tail -1`. Report the number of tests collected alongside the result.
+
+## Test Integrity & the Criteria Ledger
+
+- **Never edit, weaken, skip, or delete a test to make it pass**, and never hard-code expected
+  values or special-case test inputs in source. A failing test is fixed in the code or raised as a
+  finding. [T1 §Feature list; T2]
+- **`evals/criteria_ledger.json`** (created at Step 2.5) lists every blueprint requirement and
+  acceptance criterion, each starting `"passes": false`. Flip an entry only with the ID of the test
+  that proves it; the Reviewer audits the mapping. [T1 §Feature list]
+- **Eval regression suite in CI**: the near-100% regression suite from `evaluation-methodology` §9
+  runs with the test layers, using deterministic assertions. It is not one of the eight gates and
+  not re-run by the `Stop` hook; report its result alongside them.
+
+| ID | Source | Where the argument is |
+|---|---|---|
+| T1 | Anthropic, Effective harnesses for long-running agents — https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents | §Feature list ("It is unacceptable to remove or edit tests") |
+| T2 | Claude docs, Claude 4 prompting best practices — https://docs.claude.com/en/docs/build-with-claude/prompt-engineering/claude-4-best-practices | "Do not hard-code values or create solutions that only work for specific test inputs" |
 
 ## Developer Log Summary
 

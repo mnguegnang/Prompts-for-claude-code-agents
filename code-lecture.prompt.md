@@ -4,6 +4,8 @@ Template for post-implementation educational lectures explaining codebase archit
 
 **Applies LaTeX conventions from:** `~/.claude/prompts/latex-conventions.prompt.md`
 
+**Learning mode** (the user's objective includes learning): the lecture is written **incrementally, one section per component** as the per-component loop in `~/.claude/prompts/teaching-methodology.prompt.md` completes it, not after the whole build. It lives in `<repo>-learning/`, beside the build guide, never in the repository.
+
 ## File Naming
 
 `[Topic_Name]_Code_Lecture.tex`
@@ -33,6 +35,7 @@ For each critical function or class:
 2. **Why** it exists (what problem it solves).
 3. **How** it works (step-by-step logic, referencing line-level code).
 4. **Interactions** — which other modules call it or are called by it.
+5. **Expected result and failure** — what running it produces, 2 small changes to try, and what it looks like when it breaks (`teaching-methodology` §4). Put a plain-English subgoal label above each group of lines in a listing.
 
 Use `lstlisting` or `minted` LaTeX environments for inline code excerpts.
 
@@ -46,5 +49,5 @@ Use `lstlisting` or `minted` LaTeX environments for inline code excerpts.
 ## Post-Generation
 
 After compiling the PDF:
-1. Provide a brief summary of key architectural insights in chat.
+1. In chat: the PDF path and one line on what it covers. The insights live in the PDF.
 2. Ask: *"Would you like me to elaborate on any section or add coverage for additional modules?"*

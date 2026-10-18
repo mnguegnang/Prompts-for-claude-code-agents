@@ -15,6 +15,11 @@ Domain-specific review checklist for DL/ML codebases. Loaded by the Code Review 
 - Verify train/val/test split separation. Look for data leakage (e.g., applying dataset-wide scaling before splitting, or train/val preprocessing mismatch).
 - Check class imbalance handling and metric selection validity.
 - Verify that evaluation metrics match the stated objective.
+- Check that model changes were chosen from a bias / variance / data-mismatch diagnosis
+  (`evaluation-methodology` §3a), not by trial and error.
+- **Training–serving skew:** one feature code path, a data schema checked on both sides, serving
+  inputs compared with training inputs (`production-operations` §1).
+- Fine-tuning or preference optimisation in scope → also load `review-post-training.prompt.md`.
 
 ### Determinism (seeds alone are not enough)
 Fixing seeds does not make a CUDA training run reproducible. Also require, where reproducibility

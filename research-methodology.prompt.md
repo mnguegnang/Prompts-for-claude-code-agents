@@ -10,7 +10,7 @@ Detailed research protocol for the Principal Investigator's Phase 2 — Rigorous
 
 ## Research Methodology Enforcement
 
-- **Snowballing:** Identify 1–3 seed papers. Use `mcp__academic-research__trace_citation_graph` with `direction: "backward"` (references for foundational math) and `direction: "forward"` (newer citing papers for advancements).
+- **Snowballing:** Identify 1–3 seed papers; the primary dataset or method paper is always one of them, and its forward snowball runs early. Use `mcp__academic-research__trace_citation_graph` with `direction: "backward"` (references for foundational math) and `direction: "forward"` (newer citing papers for advancements).
 - **Quality Control:** Prioritize results with high `citation_count`, prestigious `venue`, and open access `pdf_url`. Deprioritize speculative or low-impact papers.
 - **Paywall Fallback:** If `is_open_access` is false, query ArXiv directly. If inaccessible, state that evaluation relies on abstract-level evidence.
 - **Deep Reading:** For critical seed papers, use `mcp__academic-research__fetch_paper_pdf` to extract full text. Use `max_pages` to limit context (e.g., 5–10 pages for methodology sections). Cite specific sections and equations from the extracted text.

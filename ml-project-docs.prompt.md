@@ -14,7 +14,8 @@ appending to the same ground-truth file produces a log that describes code no lo
 | `Review_Log.md` | Review findings and fixes applied by the reviewer | **Reviewer only** | Coder, Reviewer |
 | `Project_Notes.md` | ADR: deviations from blueprint, assumptions, known debt, scaling limits | Coder writes; Reviewer appends **only** to the Conflicts section | everyone |
 | `Evaluation_Report.md` | Eval spec results, error-analysis taxonomy, metrics with dispersion | Coder | everyone |
-| `[Topic]_Code_Lecture.tex` | (Optional) Formal academic lecture on the codebase | Coder | user |
+| `[Topic]_Code_Lecture.tex` | (Optional) Formal academic lecture on the codebase — kept in `<repo>-learning/`, **outside the repo** | Coder | user |
+| `[Topic]_Build_Guide.tex` | Learning mode only: per-component steps, exercises, and tests — `<repo>-learning/`, outside the repo (`teaching-methodology` §1) | Coder | user |
 
 **Reconciliation rule.** On resume, the Coder reads `Developer_Log.md`, then `Review_Log.md`, then
 `Project_Notes.md`, in that order. Where a review fix contradicts an approved deviation, the

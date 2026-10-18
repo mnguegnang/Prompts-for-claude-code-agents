@@ -2,6 +2,8 @@
 
 Template for academic/pedagogical lectures explaining theoretical concepts, research findings, and methodological evolution. Follows the Source-First Principle.
 
+**When the user's objective includes learning, also apply `~/.claude/prompts/teaching-methodology.prompt.md`:** objectives as verb + content mapped to checks, pre-training before mechanisms, short segments, plain language, and each section ending with questions rather than a summary. The lecture is *explanation*; procedures belong in the build guide.
+
 **Applies LaTeX conventions from:** `~/.claude/prompts/latex-conventions.prompt.md`
 
 ## File Naming
@@ -18,7 +20,7 @@ Ground the lecture in a concrete dataset or context from the user's problem. Int
 
 Two-phase pedagogy for every major concept:
 
-1. **STEP 1 — The Source:** Present the formal mathematics exactly as defined in the authoritative source papers. Annotate each equation with `\sourcenote{}` citing the originating paper, section, and page.
+1. **STEP 1 — The Source:** Present the formal mathematics exactly as defined in the authoritative source papers. Cite each equation with a footnote `\fnsrc[<page or section>]{key}` ("Name et al. (Year, locator)", see `latex-conventions`).
 2. **STEP 2 — The Intuition:** Provide a plain-English translation of the mathematics, applied to the Running Example. Use analogies and diagrams where they aid understanding.
 
 ### C. Evolution of Methodologies
@@ -36,6 +38,6 @@ Identify where methods break down, under what conditions, and cite the papers th
 ## Post-Generation
 
 After compiling the PDF:
-1. Provide a brief critical takeaway summary in chat.
+1. In chat: the PDF path and one line on what it covers. The takeaways live in the PDF.
 2. Ask: *"Please review the lecture PDF. Are there any concepts or citations you would like me to clarify?"*
 3. Await confirmation before proceeding to the next phase.

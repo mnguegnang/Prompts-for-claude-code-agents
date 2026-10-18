@@ -46,6 +46,9 @@ Before implementation begins, the blueprint must fix, in writing:
 - **Minimum improvement that counts** — the effect size below which the change is not worth shipping.
 - **Guardrail metrics** — what must *not* regress (cost, latency, refusal rate, safety).
 - **Kill criterion** — the result at which this approach is abandoned rather than tuned.
+- **Risk tier per failure mode** (impact × likelihood). A high-impact, clear-cut failure gets a
+  fast deterministic guardrail in the request path *and* a blocking CI case; a low-impact one gets
+  sampled asynchronous monitoring. Testing effort is calibrated to the cost of the mistake. [E0, E4, E2]
 
 Thresholds are frozen once implementation starts; moving them after seeing results is
 prohibited and must be logged as a deviation in `Project_Notes.md` with justification.
@@ -73,6 +76,24 @@ the system fails. Open the outputs.
 6. **Work is prioritised by that table**, not by intuition and not by what is easy to fix.
 
 Specialised evals and judges are built **after** this step, targeting the modes it found — never before.
+
+- **Read one set, score another.** Split the dev set into an *Eyeball* set (read during error
+  analysis) and a *Blackbox* set (only scored). If Eyeball performance climbs much faster than
+  Blackbox performance, the Eyeball set is overfit: replace it. [E5 ch. 17]
+- **"Mislabeled" is always a candidate failure mode.** Before trusting a model ranking, screen the
+  eval set's own labels (e.g. confident learning); well-known test sets average ≥3.3% label
+  errors. Write down the labelling rule for y given x and check labellers agree on it. On small
+  datasets (<10k), fix the data before the model. [E6, E7]
+
+## 3a. Attribute the error before choosing a fix
+
+- **Trained models:** report optimal/human-level, training, training-dev, and dev error. Name the
+  dominant gap — avoidable bias, variance, or data mismatch (a training-dev set exists whenever
+  training and target distributions differ) — and choose fixes that target that gap. [E5 ch. 22, 40]
+- **Multi-stage pipelines:** attribute each failure to one component by substituting a perfect
+  upstream output. Show where a gain came from by ablation, removing one component at a time. [E5 ch. 54; E8]
+- **Search, decoding, or RL failures:** compare Score(correct output) with Score(produced output).
+  If the correct output scores higher, the optimiser is at fault; if not, the objective is. [E5 ch. 44]
 
 ## 4. Binary judgments, not Likert scales
 
@@ -118,6 +139,9 @@ A judge is admissible only if all of the following hold:
 - [ ] **Position randomised** across pairs; length controlled or explicitly measured as a confound.
 - [ ] The judge is **not the same model** that produced the output, where avoidable. If it is,
       state that self-enhancement bias is uncontrolled and treat the result as an upper bound.
+
+- [ ] **Re-validated** against fresh human labels on a stated cadence and whenever the judge model
+      or prompt changes. A one-time validation decays. [E1 §closing]
 
 **A judge without measured precision/recall is an uncalibrated instrument.** Findings resting on
 it are `Uncertain`. Flag an unvalidated judge as **High** severity in review.
@@ -170,6 +194,14 @@ Rules:
 - **Held-out means held-out**: never trained on, never tuned on, never used for prompt iteration.
 - **Contamination check**: for foundation models, verify the eval set did not leak through
   *pretraining*, not just through your own train/test split.
+- **Capability vs. regression suites.** Capability evals start at a low pass rate; the regression
+  suite should pass at ~100% and runs in CI, favouring deterministic assertions over judges. A
+  saturated capability eval graduates into the regression suite, and **every production failure or
+  incident becomes a regression case**. [E1 §Capability vs. regression evals; E2 §CI/CD]
+- **Evaluate the evals.** Every task has a reference solution that passes all graders, and two
+  domain experts would reach the same verdict on it. A 0% pass rate over many trials means a
+  broken task until shown otherwise. Include cases where the behaviour should *not* occur —
+  one-sided evals produce one-sided optimisation. [E1 Steps 2–3]
 
 ## 10. Statistical reporting (replaces "average the runs")
 
@@ -179,6 +211,11 @@ Averaging does not establish significance.
 - Report **dispersion**: stratified bootstrap confidence intervals and **interquartile mean (IQM)**
   rather than bare mean/median point estimates. `rliable` implements this for the small-n regime.
 - Report **effect size**, not just direction.
+- **Compare systems on paired differences**: when two systems answer the same questions, test the
+  per-question differences, not the difference of two means; use clustered standard errors when
+  questions come in related groups. [E3 §4.2]
+- **Size the set by power analysis** before running it: it must be able to detect the
+  pre-registered minimum improvement. A set too small to detect that effect cannot gate a release. [E3 §5]
 - Comparisons must share data splits, preprocessing, hardware, stopping criteria, and seed count.
 - **Flag as High severity** any comparison reported without dispersion, and any claim of
   significance supported only by a mean.
@@ -204,6 +241,7 @@ Offline evaluation is a proxy. Close the loop:
   live, and an explicit **rollback trigger** stated as a threshold.
 - **Production feedback loop:** sampled production traces flow back into §3 error analysis on a
   stated cadence. Evaluation is continuous, not a stage that completes.
+- Drift detection, incident response, and cost/latency optimisation: `production-operations.prompt.md`.
 
 ---
 
@@ -221,9 +259,26 @@ EVALUATION SPEC
 - Guardrail metrics (must not regress): <list with thresholds>
 - Kill criterion: <result at which this approach is abandoned>
 - Eval sets: <production | slices | failure-mode sets — names and sizes>
-- n (runs/seeds): <n>, dispersion reported as <bootstrap CI | IQM>
-- Judge validated: <yes — precision X / recall Y on held-out human labels | no judge used | NO — result is Uncertain>
+- n (runs/seeds): <n>, dispersion reported as <bootstrap CI | IQM>; comparison <paired | clustered>
+- Power: <set size, and the minimum effect it can detect at the chosen α/power>
+- Risk tiers: <failure mode → tier → request-path guardrail | blocking CI | sampled monitoring>
+- Eyeball / Blackbox split: <set names and sizes>
+- Judge validated: <yes — precision X / recall Y on held-out human labels, re-validation cadence | no judge used | NO — result is Uncertain>
 - Error analysis: <N traces reviewed, M failure modes, top mode = X at Y%>
 - Observability: <which §11 dimensions are instrumented>
 - Rollout & rollback: <mechanism, guardrail, trigger>
 ```
+
+## Sources (for rules marked [E#])
+
+| ID | Source | Where the argument is |
+|---|---|---|
+| E0 | Ng, AI Engineering Skills Map: Building and deploying AI applications — https://www.linkedin.com/pulse/ai-engineering-skills-map-building-deploying-applications-andrew-ng-gyn5e/ | ¶ "Evaluation-driven development"; ¶ "Operating in production" ("calibrated relative to the risk of a mistake") |
+| E1 | Anthropic, Demystifying evals for AI agents — https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents | §Capability vs. regression evals; Steps 2–3; closing section |
+| E2 | Husain, Evals FAQ — https://hamel.dev/blog/posts/evals-faq/ | §CI/CD vs. monitoring production; §Guardrails vs. evaluators |
+| E3 | Miller, Adding Error Bars to Evals — https://arxiv.org/abs/2411.00640 | Recommendations 2, 4, 5; §4.2 (paired); §5 (power) |
+| E4 | NIST AI 100-1 — https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.100-1.pdf | GOVERN 1.3; MANAGE 1.2 |
+| E5 | Ng, Machine Learning Yearning — https://home-wordpress.deeplearning.ai/wp-content/uploads/2022/03/andrew-ng-machine-learning-yearning.pdf | Ch. 16–17 (Eyeball/Blackbox), 22 (bias decomposition), 40 (data mismatch), 44 (optimisation verification), 54 (component attribution) |
+| E6 | Ng, Data-centric AI development — https://www.deeplearning.ai/the-batch/data-centric-ai-development-part-2-a-critical-shift-in-perspective | "Is the definition of y given x clear and unambiguous?" |
+| E7 | Northcutt et al., Pervasive Label Errors in Test Sets — https://arxiv.org/abs/2103.14749 | Abstract |
+| E8 | Stanford CS229, Advice for applying ML — https://cs229.stanford.edu/materials/ML-advice.pdf | Slides "Diagnostic for bias vs. variance", "Ablative analysis" |
